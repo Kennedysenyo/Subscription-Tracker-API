@@ -24,13 +24,13 @@ const subscriptionSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        enum: ["sports", "news", "entertainment", "lifestyle", "technology", "finance", "politics", "other"],
+        enum: ["sport", "news", "entertainment", "lifestyle", "technology", "finance", "politics", "other"],
         required: true,
     },
     paymentMethod: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
     },
     status: {
         type: String,
@@ -47,44 +47,40 @@ const subscriptionSchema = new mongoose.Schema({
     },
     renewalDate: {
         type: Date,
-        required: true,
         validate: {
-            validator: function(value) {
-                return value > this.startDate;
-                },
+            validator: function(value){
+                return value >= this.startDate;
             },
-        message: "Renewal date must be after the start date",
+            message: "Renewal date must be after the start date",
+        }
     },
-    user: {
+    user : {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
         index: true,
     }
+}, {timestamps: true});
 
-    }, { timestamps: true });
-
-
-// Auto-calculate renewal date if missing.
-subscriptionSchema.pre("save", function (next){
-    if(!this.renewwalDate) {
+subscriptionSchema.pre("save", function(next) {
+    if(!this.renewalDate) {
         const renewalPeriods = {
             daily: 1,
             weekly: 7,
             monthly: 30,
             yearly: 365,
-        }
-
+        };
         this.renewalDate = new Date(this.startDate);
         this.renewalDate.setDate(this.renewalDate.getDate() + renewalPeriods[this.frequency]);
     }
 
     // Auto-update the status if renewal date has passed
-    if (this.renewalDate < new Date()) {
-        this.status = "expired"
+    if(this.renewalDate < new Date()) {
+        this.status = "expired";
     }
+
     next();
-})
+});
 
 const Subscription = mongoose.model("Subscription", subscriptionSchema);
 
